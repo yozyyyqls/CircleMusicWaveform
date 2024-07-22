@@ -3,6 +3,7 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+        maven("https://jitpack.io")
     }
 }
 dependencyResolutionManagement {
@@ -15,4 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "CircleMusicWaveform"
 include(":app")
- 
+include(":waveform")
