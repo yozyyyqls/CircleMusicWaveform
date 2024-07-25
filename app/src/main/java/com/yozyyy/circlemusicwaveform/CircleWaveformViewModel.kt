@@ -3,18 +3,29 @@ package com.yozyyy.circlemusicwaveform
 import android.content.Context
 import android.media.MediaPlayer
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.yozyyy.waveform.WaveCustomize
-import com.yozyyy.waveform.WaveEngine
-import com.yozyyy.waveform.WaveRenderer
+import com.yozyyy.waveform.view.CircleWaveCustomize
+import com.yozyyy.waveform.view.customize.WaveCustomize
+import com.yozyyy.waveform.engine.WaveEngine
+import com.yozyyy.waveform.renderer.WaveRenderer
 
 class CircleWaveformViewModel : ViewModel(), WaveRenderer, MediaPlayer.OnCompletionListener {
     private lateinit var waveEngine: WaveEngine
     private lateinit var mediaPlayer: MediaPlayer
-    private val _isPlaying: MutableState<Boolean> = mutableStateOf(false)
-    val isPlaying: MutableState<Boolean>
+
+    private var _isPlaying by mutableStateOf(false)
+    var isPlaying: Boolean
         get() = _isPlaying
+        set(value) {
+            _isPlaying = value
+        }
+
+    private var _isEnd by mutableStateOf(false)
+    val isEnd: Boolean
+        get() = _isEnd
 
     private lateinit var _waveData: MutableState<List<Int>>
     val waveData: MutableState<List<Int>>
@@ -24,30 +35,30 @@ class CircleWaveformViewModel : ViewModel(), WaveRenderer, MediaPlayer.OnComplet
     override val customize: WaveCustomize
         get() = _waveCustomize
 
-    fun initMusic(context: Context, waveCustomize: WaveCustomize) {
-        _waveCustomize = waveCustomize
-        _waveData = mutableStateOf(List(waveCustomize.barNumber) { waveCustomize.barMinHeight })
+    fun init(context: Context) {
+        _waveCustomize  = CircleWaveCustomize(12, 30, 72, 6, 6)
+        _waveData = mutableStateOf(List(_waveCustomize.barNumber) { _waveCustomize.barMinHeight })
         mediaPlayer = MediaPlayer.create(context, R.raw.breathing)
         mediaPlayer.setOnCompletionListener(this)
-        waveEngine = WaveEngine(mediaPlayer.audioSessionId, this)
+        waveEngine = WaveEngine(mediaPlayer.audioSessionId, this@CircleWaveformViewModel)
     }
 
     fun play() {
-        _isPlaying.value = true
+        _isPlaying = true
+        if (_isEnd) _isEnd = false
         mediaPlayer.start()
         waveEngine.active = true
-
     }
 
     fun pause() {
-        _isPlaying.value = false
+        _isPlaying = false
         mediaPlayer.pause()
         waveEngine.active = false
     }
 
     override fun onCleared() {
         super.onCleared()
-        isPlaying.value = false
+        isPlaying = false
         mediaPlayer.release()
         waveEngine.active = false
         waveEngine.release()
@@ -59,6 +70,7 @@ class CircleWaveformViewModel : ViewModel(), WaveRenderer, MediaPlayer.OnComplet
 
     override fun onCompletion(mp: MediaPlayer?) {
         waveEngine.active = false
-        _isPlaying.value = false
+        _isPlaying = false
+        _isEnd = true
     }
 }

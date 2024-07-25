@@ -1,5 +1,6 @@
-package com.yozyyy.waveform
+package com.yozyyy.waveform.view
 
+import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -27,20 +28,24 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.yozyyy.waveform.renderer.WaveRenderer
 
 @Composable
 fun CircleWaveform(
-    modifier: Modifier = Modifier,
+    modifier: Modifier,
     color: Color = Color.White,
     alpha: Float = 0.5f,
     radius: Dp = 120.dp, // the radius of circle waveform
     barWidth: Dp = 12.dp,
+    barMinHeight: Dp = 12.dp,
+    barMaxHeight: Dp = 30.dp,
     barCornerRadius: Dp = 6.dp, // the corner radius of each bar
     barNumber: Int,
     barHeights: List<Int>,
-    isPlaying: Boolean = false
+    isPlaying: Boolean = false, // True if a song is playing but not completed
+    isEnd: Boolean = false, // True if a song is completed
 ) {
-    require(barNumber > 8) { "barNumber must be greater than 8" }
+    require(barNumber > 0) { "barNumber must be greater than 0" }
     require(barHeights.isNotEmpty()) { "barHeights list cannot be empty" }
     require(barHeights.size >= barNumber) { "barHeights list must have at least $barNumber elements" }
     require(radius >= 0.dp) { "radius must be greater than 0" }
@@ -48,19 +53,25 @@ fun CircleWaveform(
     require(barCornerRadius >= 0.dp) { "barCornerRadius cannot be negative" }
 
     // create the animation of changing of bar height
-    val animateHeight = remember { mutableStateListOf<State<Int>>() }
-    repeat(barNumber) { index ->
-        val animate = animateIntAsState(
-            targetValue = if (isPlaying) barHeights[index] else animateHeight.getOrNull(index)?.value
-                ?: barHeights[index],
-            label = "",
-            animationSpec = tween(WaveRenderer.duration.toInt(), easing = FastOutSlowInEasing)
-        )
-        animateHeight.add(animate)
+    val animateHeight = remember(barNumber) { mutableStateListOf<State<Int>>() }.apply {
+        Log.d("CircleWaveform", "animateHeight size: $size ")
+        repeat(barNumber) { index ->
+            val animate = animateIntAsState(
+                targetValue = if (isPlaying) barHeights[index] else getOrNull(index)?.value
+                    ?: barHeights[index],
+                label = "",
+                animationSpec = tween(WaveRenderer.duration.toInt(), easing = FastOutSlowInEasing)
+            )
+            if (getOrNull(index) == null) {
+                add(animate)
+            } else {
+                set(index, animate)
+            }
+        }
     }
 
     // precompute the angles to avoid repeated calculations
-    val angleBetweenBar = 360f / barNumber.toFloat()
+    val angleBetweenBar = remember(barNumber) { 360f / barNumber.toFloat() }
     val angles = remember(barNumber) { List(barNumber) { index -> index * angleBetweenBar } }
     Canvas(
         modifier = modifier
@@ -73,7 +84,7 @@ fun CircleWaveform(
         // drawing each bar based on the given height
         barHeights.take(barNumber).forEachIndexed { index, _ ->
             val degree = angles[index]
-            val height = animateHeight[index].value.dp
+            val height = if (isEnd) barMinHeight else animateHeight[index].value.dp
             rotate(degrees = degree, pivot = Offset(centerX, centerY)) {
                 drawRoundRect(
                     color = color,

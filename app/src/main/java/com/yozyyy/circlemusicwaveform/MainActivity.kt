@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -25,56 +26,53 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.googlefonts.Font
+import androidx.compose.ui.text.googlefonts.GoogleFont
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.yozyyy.circlemusicwaveform.ui.theme.BlueGrey
 import com.yozyyy.circlemusicwaveform.ui.theme.CircleMusicWaveformTheme
 import com.yozyyy.circlemusicwaveform.ui.theme.WhiteAlpha50
-import com.yozyyy.waveform.CircleMusicCover
-import com.yozyyy.waveform.CircleWaveform
-import com.yozyyy.waveform.CircleWaveformCustomize
-import com.yozyyy.waveform.WaveCustomize
+import com.yozyyy.waveform.view.CircleMusicCover
+import com.yozyyy.waveform.view.CircleWaveform
 import com.zedalpha.shadowgadgets.compose.clippedShadow
 
 class MainActivity : ComponentActivity() {
     private val waveformViewModel by viewModels<CircleWaveformViewModel>()
-    private lateinit var waveformCustomize: WaveCustomize
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        init()
+
+        waveformViewModel.init(this)
         setContent {
             CircleMusicWaveformTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting(viewModel = waveformViewModel, waveCustomize = waveformCustomize)
+                    Greeting(viewModel = waveformViewModel)
                 }
             }
         }
-    }
-
-    private fun init() {
-        waveformCustomize = CircleWaveformCustomize(12, 30, 72, 6, 6)
-        waveformViewModel.initMusic(this, waveformCustomize)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        waveformViewModel
     }
 }
 
 @Composable
 fun Greeting(
-    modifier: Modifier = Modifier,
-    viewModel: CircleWaveformViewModel,
-    waveCustomize: WaveCustomize
+    viewModel: CircleWaveformViewModel
 ) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
         Image(
             modifier = Modifier.fillMaxSize(),
             painter = painterResource(id = R.drawable.bg_gradient),
@@ -83,31 +81,61 @@ fun Greeting(
         )
         Column(
             modifier = Modifier
-                .width(300.dp)
-                .height(500.dp)
-                .clippedShadow(shape = RoundedCornerShape(16.dp), elevation = 30.dp)
+                .width(297.dp)
+                .height(499.dp)
+                .clippedShadow(
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = 30.dp,
+                    spotColor = Color(0x40000000),
+                    ambientColor = Color(0x40000000)
+                )
                 .clip(RoundedCornerShape(16.dp))
                 .background(color = WhiteAlpha50)
-                .padding(vertical = 24.dp),
+                .padding(top = 24.dp, bottom = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "Circle Music Waveform")
+            val provider = remember {
+                GoogleFont.Provider(
+                    providerAuthority = "com.google.android.gms.fonts",
+                    providerPackage = "com.google.android.gms",
+                    certificates = R.array.com_google_android_gms_fonts_certs
+                )
+            }
+            val fontFamily = remember {
+                FontFamily(
+                    Font(googleFont = GoogleFont("Archivo Black"), fontProvider = provider)
+                )
+            }
+            Text(
+                text = "Circle Music Waveform",
+                style = TextStyle(
+                    fontSize = 18.sp,
+                    fontFamily = fontFamily,
+                    fontWeight = FontWeight(400),
+                    color = Color(0xFF887EC0),
+                    textAlign = TextAlign.Center,
+                )
+            )
             Box(
                 modifier = Modifier.wrapContentSize(),
                 contentAlignment = Alignment.Center
             ) {
+                // ============== The main UI part ================
                 CircleWaveform(
                     Modifier
-                        .width(320.dp)
+                        .fillMaxWidth()
                         .height(320.dp),
                     radius = 110.dp,
-                    barCornerRadius = waveCustomize.barCornerRadius.dp,
-                    barWidth = waveCustomize.barWidth.dp,
+                    barCornerRadius = viewModel.customize.barCornerRadius.dp,
+                    barWidth = viewModel.customize.barWidth.dp,
                     barHeights = viewModel.waveData.value,
-                    barNumber = waveCustomize.barNumber,
+                    barMinHeight = viewModel.customize.barMinHeight.dp,
+                    barMaxHeight = viewModel.customize.barMaxHeight.dp,
+                    barNumber = viewModel.customize.barNumber,
                     color = BlueGrey,
-                    isPlaying = viewModel.isPlaying.value
+                    isPlaying = viewModel.isPlaying,
+                    isEnd = viewModel.isEnd
                 )
                 CircleMusicCover(
                     Modifier
@@ -115,8 +143,9 @@ fun Greeting(
                         .height(210.dp),
                     R.drawable.img_music_cover,
                     cornerRadius = 210.dp,
-                    isPlaying = viewModel.isPlaying.value
+                    isPlaying = viewModel.isPlaying
                 )
+                // ============== The main UI part ================
             }
             val interactionSource = remember {
                 MutableInteractionSource()
@@ -126,15 +155,18 @@ fun Greeting(
                     .width(72.dp)
                     .height(72.dp)
                     .clip(RoundedCornerShape(72.dp))
-                    .clickable(interactionSource = interactionSource, indication = null) { // disable the touch ripple effect
-                        viewModel.isPlaying.value = !viewModel.isPlaying.value
-                        if (viewModel.isPlaying.value) {
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null // disable the touch ripple effect
+                    ) {
+                        viewModel.isPlaying = !viewModel.isPlaying
+                        if (viewModel.isPlaying) {
                             viewModel.play()
                         } else {
                             viewModel.pause()
                         }
                     },
-                painter = painterResource(id = if (!viewModel.isPlaying.value) R.drawable.ic_player_pause else R.drawable.ic_player_start),
+                painter = painterResource(id = if (!viewModel.isPlaying) R.drawable.ic_player_pause else R.drawable.ic_player_start),
                 contentDescription = "",
             )
         }
@@ -148,7 +180,6 @@ fun Greeting(
 )
 @Composable
 fun GreetingPreview() {
-    val waveformViewModel = CircleWaveformViewModel()
-    val waveformCustomize = CircleWaveformCustomize(12, 30, 72, 6, 6)
-    Greeting(viewModel = waveformViewModel, waveCustomize = waveformCustomize)
+//    val waveformViewModel = CircleWaveformViewModel()
+//    Greeting(viewModel = waveformViewModel)
 }

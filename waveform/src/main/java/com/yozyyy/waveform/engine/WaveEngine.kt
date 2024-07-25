@@ -1,6 +1,7 @@
-package com.yozyyy.waveform
+package com.yozyyy.waveform.engine
 
 import android.media.audiofx.Visualizer
+import com.yozyyy.waveform.renderer.WaveRenderer
 
 class WaveEngine(
     audioSession: Int,

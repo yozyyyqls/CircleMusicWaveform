@@ -1,6 +1,6 @@
-package com.yozyyy.waveform
+package com.yozyyy.waveform.renderer
 
-import com.yozyyy.waveform.WaveCustomize
+import com.yozyyy.waveform.view.customize.WaveCustomize
 
 interface WaveRenderer {
     val customize: WaveCustomize

@@ -1,4 +1,4 @@
-package com.yozyyy.waveform
+package com.yozyyy.waveform.view.customize
 
 interface WaveCustomize {
     val barMinHeight: Int
