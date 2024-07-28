@@ -48,7 +48,7 @@ Add it in your root `build.gradle` at the end of repositories:
 ```gradle
 allprojects {
 	repositories {
-		...
+		// ...
 		maven { url 'https://jitpack.io' }
 	}
 }
@@ -57,7 +57,7 @@ allprojects {
 Add the dependency in your app's `build.gradle` file
 ```gradle
  dependencies {
-         implementation 'com.yozyyy.circlemusicwaveform:waveform:1.0.0'
+    implementation 'com.github.yozyyyqls:CircleMusicWaveform:1.0.0'
  }
  ```
 
