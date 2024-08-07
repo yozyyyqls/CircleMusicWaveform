@@ -2,6 +2,8 @@ package com.yozyyy.waveform.engine
 
 import android.util.Log
 import io.vacco.savitzkygolay.SgFilter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
@@ -11,7 +13,12 @@ import kotlin.math.sqrt
  */
 class WaveParser {
 
-    fun parse(toParse: ByteArray, viewMin: Int, viewMax: Int, chunkNum: Int): List<Int> {
+    suspend fun parseAsync(toParse: ByteArray, viewMin: Int, viewMax: Int, chunkNum: Int): List<Int> =
+        withContext(Dispatchers.Default) {
+            parse(toParse, viewMin, viewMax, chunkNum)
+        }
+
+    private fun parse(toParse: ByteArray, viewMin: Int, viewMax: Int, chunkNum: Int): List<Int> {
         if (chunkNum <= 0) {
             throw IllegalArgumentException("chunkNum must be greater than 0")
         }

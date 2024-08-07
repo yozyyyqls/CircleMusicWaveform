@@ -2,6 +2,9 @@ package com.yozyyy.waveform.engine
 
 import android.media.audiofx.Visualizer
 import com.yozyyy.waveform.renderer.WaveRenderer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class WaveEngine(
     audioSession: Int,
@@ -57,13 +60,15 @@ class WaveEngine(
                 lastTime = currentTime
                 if (waveform != null && waveform.isNotEmpty()) {
                     for (waveRenderer in waveRenderers) {
-                        val data = waveParser.parse(
-                            waveform,
-                            waveRenderer.customize.barMinHeight,
-                            waveRenderer.customize.barMaxHeight,
-                            waveRenderer.customize.barNumber
-                        )
-                        waveRenderer.render(data)
+                        CoroutineScope(Dispatchers.Main).launch {
+                            val data = waveParser.parseAsync(
+                                waveform,
+                                waveRenderer.customize.barMinHeight,
+                                waveRenderer.customize.barMaxHeight,
+                                waveRenderer.customize.barNumber
+                            )
+                            waveRenderer.render(data)
+                        }
                     }
                 }
             }
