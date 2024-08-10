@@ -1,8 +1,13 @@
 package com.yozyyy.circlemusicwaveform
 
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -18,9 +23,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -38,6 +45,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.yozyyy.circlemusicwaveform.ui.theme.BlueGrey
 import com.yozyyy.circlemusicwaveform.ui.theme.CircleMusicWaveformTheme
 import com.yozyyy.circlemusicwaveform.ui.theme.WhiteAlpha50
@@ -47,10 +55,18 @@ import com.zedalpha.shadowgadgets.compose.clippedShadow
 
 class MainActivity : ComponentActivity() {
     private val waveformViewModel by viewModels<CircleWaveformViewModel>()
+    private var requestPermissionLauncher: ActivityResultLauncher<String>? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         waveformViewModel.init(this)
+        requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            // The ActivityResultCallback
+            waveformViewModel.isGranted = isGranted
+            if (isGranted) {
+                waveformViewModel.startWaveEngine()
+            }
+        }
         setContent {
             CircleMusicWaveformTheme {
                 Surface(
@@ -58,7 +74,51 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Greeting(viewModel = waveformViewModel)
+                    if (!waveformViewModel.isGranted) {
+                        AlertDialog(onDismissRequest = { finish() },
+                            confirmButton = {
+                                TextButton(onClick = { finish() }) {
+                                    Text(text = "Exit")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = {
+                                    val intent = Intent(Settings.ACTION_PRIVACY_SETTINGS).apply {
+                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    }
+                                    startActivity(intent)
+                                }) {
+                                    Text(text = "Go to Privacy Setting")
+                                }
+                            },
+                            title = {
+                                Text(text = "Permission Denied")
+                            },
+                            text = {
+                                Text(text = "Please allow the app to access the microphone to use this feature.")
+                            }
+                        )
+                    }
                 }
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        when (PackageManager.PERMISSION_GRANTED) {
+            // Check the audio permission.
+            ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) -> {
+                waveformViewModel.startWaveEngine()
+                waveformViewModel.isGranted = true
+            }
+
+            else -> {
+                // Directly ask for the permission.
+                // The registered ActivityResultCallback gets the result of this request.
+                requestPermissionLauncher?.launch(
+                    android.Manifest.permission.RECORD_AUDIO
+                )
             }
         }
     }

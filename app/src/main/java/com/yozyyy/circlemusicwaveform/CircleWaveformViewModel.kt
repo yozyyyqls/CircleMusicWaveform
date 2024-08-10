@@ -7,10 +7,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.yozyyy.waveform.view.CircleWaveCustomize
-import com.yozyyy.waveform.view.customize.WaveCustomize
 import com.yozyyy.waveform.engine.WaveEngine
 import com.yozyyy.waveform.renderer.WaveRenderer
+import com.yozyyy.waveform.view.CircleWaveCustomize
+import com.yozyyy.waveform.view.customize.WaveCustomize
 
 class CircleWaveformViewModel : ViewModel(), WaveRenderer, MediaPlayer.OnCompletionListener {
     private lateinit var waveEngine: WaveEngine
@@ -35,11 +35,17 @@ class CircleWaveformViewModel : ViewModel(), WaveRenderer, MediaPlayer.OnComplet
     override val customize: WaveCustomize
         get() = _waveCustomize
 
+    var isGranted by mutableStateOf(true)  // True means microphone permission is granted
+
     fun init(context: Context) {
         _waveCustomize  = CircleWaveCustomize(12, 30, 72, 6, 6)
         _waveData = mutableStateOf(List(_waveCustomize.barNumber) { _waveCustomize.barMinHeight })
         mediaPlayer = MediaPlayer.create(context, R.raw.breathing)
         mediaPlayer.setOnCompletionListener(this)
+//        waveEngine = WaveEngine(mediaPlayer.audioSessionId, this@CircleWaveformViewModel)
+    }
+
+    fun startWaveEngine() {
         waveEngine = WaveEngine(mediaPlayer.audioSessionId, this@CircleWaveformViewModel)
     }
 
