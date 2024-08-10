@@ -62,6 +62,9 @@ Add the dependency in your app's `build.gradle` file
  ```
 
 ## Usage
+### Something you should know before
+When you turn the device volumn off, the Android Visualizer can't capture waveform data. The UI of waveform won't wave as music going.
+
 ### How to get the wave data?
 ```kotlin
 // 1. Implement the WaveRenderer interface, which is use for updating bar heights.
