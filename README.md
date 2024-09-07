@@ -1,5 +1,7 @@
 <img src="./gif/banner.png"></br>
 # CircleMusicWaveform
+[![](https://jitpack.io/v/yozyyyqls/CircleMusicWaveform.svg)](https://jitpack.io/#yozyyyqls/CircleMusicWaveform)
+
 Circle Music Waveform is a UI component based on Jetpack compose. It waves with your music going. And the music cover keeps spinning.
 
 ## Preview
