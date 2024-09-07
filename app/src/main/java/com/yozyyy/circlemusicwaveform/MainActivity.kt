@@ -60,20 +60,21 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         waveformViewModel.init(this)
-        requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            // The ActivityResultCallback
-            waveformViewModel.isGranted = isGranted
-            if (isGranted) {
-                waveformViewModel.startWaveEngine()
+        requestPermissionLauncher =
+            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+                // The ActivityResultCallback
+                waveformViewModel.isGranted = isGranted
+                if (isGranted) {
+                    waveformViewModel.startWaveEngine()
+                }
             }
-        }
         setContent {
             CircleMusicWaveformTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting(viewModel = waveformViewModel)
+                    MainScreen(viewModel = waveformViewModel)
                     if (!waveformViewModel.isGranted) {
                         AlertDialog(onDismissRequest = { finish() },
                             confirmButton = {
@@ -125,7 +126,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(
+fun MainScreen(
     viewModel: CircleWaveformViewModel
 ) {
     Box(
@@ -155,18 +156,7 @@ fun Greeting(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            val provider = remember {
-                GoogleFont.Provider(
-                    providerAuthority = "com.google.android.gms.fonts",
-                    providerPackage = "com.google.android.gms",
-                    certificates = R.array.com_google_android_gms_fonts_certs
-                )
-            }
-            val fontFamily = remember {
-                FontFamily(
-                    Font(googleFont = GoogleFont("Archivo Black"), fontProvider = provider)
-                )
-            }
+            val fontFamily = rememberGoogleFontFamily(fontName = "Archivo Black")
             Text(
                 text = "Circle Music Waveform",
                 style = TextStyle(
@@ -230,6 +220,22 @@ fun Greeting(
                 contentDescription = "",
             )
         }
+    }
+}
+
+@Composable
+private fun rememberGoogleFontFamily(fontName: String): FontFamily {
+    val provider = remember {
+        GoogleFont.Provider(
+            providerAuthority = "com.google.android.gms.fonts",
+            providerPackage = "com.google.android.gms",
+            certificates = R.array.com_google_android_gms_fonts_certs
+        )
+    }
+    return remember {
+        FontFamily(
+            Font(googleFont = GoogleFont(fontName), fontProvider = provider)
+        )
     }
 }
 
